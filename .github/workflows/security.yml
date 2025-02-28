@@ -1,0 +1,80 @@
+name: Security Analysis
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 0 * * 0'  # Run weekly on Sunday at midnight
+
+jobs:
+  dependency-check:
+    name: Check for vulnerable dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety bandit
+
+      - name: Check dependencies with Safety
+        run: |
+          safety check -r requirements/prod.txt
+
+      - name: Scan code with Bandit
+        run: |
+          bandit -r src/ -x tests/ -f json -o bandit-results.json
+      
+      - name: Upload security scan results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-scan-results
+          path: bandit-results.json
+        if: always()
+
+  secret-scanning:
+    name: Scan for secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@v3.42.0
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  code-scanning:
+    name: CodeQL scanning
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: python
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2

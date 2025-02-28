@@ -1,0 +1,100 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/dev.txt
+
+      - name: Check code formatting with Black
+        run: |
+          black --check --diff src tests
+
+      - name: Lint with flake8
+        run: |
+          flake8 src tests --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 src tests --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+
+      - name: Check imports order with isort
+        run: |
+          isort --check-only --profile black src tests
+
+      - name: Type check with mypy
+        run: |
+          mypy src
+
+      - name: Run tests
+        run: |
+          pytest tests/ --junitxml=junit/test-results.xml --cov=src --cov-report=xml
+        env:
+          DATABASE_TYPE: postgresql
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USER: postgres
+          DATABASE_PASSWORD: postgres
+          DATABASE_NAME: test_db
+          SECRET_KEY: test-secret-key
+          FIRST_SUPERUSER: admin@example.com
+          FIRST_SUPERUSER_PASSWORD: admin123
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: ""
+          REDIS_DB: 0
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: junit/test-results.xml
+        if: always()
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false

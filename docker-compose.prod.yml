@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  api:
+    image: ${DOCKER_IMAGE:-your-registry/fastapi-template:latest}
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - backend
+      - traefik-public
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.example.com`)"
+      - "traefik.http.services.api.loadbalancer.server.port=8000"
+
+  postgres:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env.prod
+    networks:
+      - backend
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.swarm=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik-public
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - backend
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  grafana:
+    image: grafana/grafana:10.0.3
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+    networks:
+      - backend
+      - traefik-public
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.example.com`)"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  backend:
+    driver: overlay
+    internal: true
+  traefik-public:
+    driver: overlay
+    external: true
