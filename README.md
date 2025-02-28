@@ -37,7 +37,7 @@ A modern, production-ready template for FastAPI projects with authentication, CR
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/fastapi-template.git
+git clone https://github.com/Ibrahimzongo/fastapi-template.git
 cd fastapi-template
 ```
 
