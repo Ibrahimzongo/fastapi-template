@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build:
@@ -17,7 +15,7 @@ services:
       - redis
     networks:
       - backend
-
+ 
   postgres:
     image: postgres:15-alpine
     volumes:
@@ -35,7 +33,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+ 
   mysql:
     image: mysql:8
     volumes:
@@ -55,7 +53,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+ 
   redis:
     image: redis:7-alpine
     command: redis-server --requirepass ${REDIS_PASSWORD}
@@ -68,9 +66,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+ 
   adminer:
-    image: adminer
+    image: adminer:4.8.1  # Spécifier une version spécifique
+    restart: always      # Ajouter restart policy
     ports:
       - "8080:8080"
     environment:

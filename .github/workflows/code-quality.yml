@@ -41,6 +41,10 @@ jobs:
           SECRET_KEY: test-secret-key
           FIRST_SUPERUSER: admin@example.com
           FIRST_SUPERUSER_PASSWORD: admin123
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: "redispassword"
+          REDIS_DB: 0
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
@@ -49,8 +53,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=${{ github.repository_owner }}_fastapi-template
-            -Dsonar.organization=${{ github.repository_owner }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY || github.repository_owner }}_fastapi-template
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION || github.repository_owner }}
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.sources=src
             -Dsonar.tests=tests
@@ -60,6 +64,33 @@ jobs:
   check-openapi:
     name: Validate OpenAPI Schema
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7-alpine
+        command: redis-server --requirepass redispassword
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -73,10 +104,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install openapi-spec-validator
+          pip install -r requirements/dev.txt
 
       - name: Run API server temporarily
         run: |
-          python -m pip install -r requirements/dev.txt
           python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 &
           sleep 10  # Give the server time to start
         env:
@@ -89,6 +120,10 @@ jobs:
           SECRET_KEY: test-secret-key
           FIRST_SUPERUSER: admin@example.com
           FIRST_SUPERUSER_PASSWORD: admin123
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          REDIS_PASSWORD: "redispassword"
+          REDIS_DB: 0
 
       - name: Download OpenAPI schema
         run: |
@@ -103,3 +138,4 @@ jobs:
         with:
           name: openapi-schema
           path: openapi.json
+          retention-days: 14

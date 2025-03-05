@@ -32,15 +32,15 @@ def test_read_post(
     normal_user_token_headers: dict,
     db: Session
 ) -> None:
-    # Create a test post first
     post_repo = PostRepository(db)
     post = post_repo.create(
         PostCreate(
             title="Test Post",
             content="Content",
-            published=True
+            published=True,
+            tags=[]  # Add empty tags list
         ),
-        author_id=1  # ID of normal_user from fixtures
+        author_id=1
     )
 
     response = client.get(
@@ -51,6 +51,7 @@ def test_read_post(
     content = response.json()
     assert content["title"] == post.title
     assert content["id"] == post.id
+    assert "author" in content  # Verify author is included
 
 def test_read_posts_pagination(
     client: TestClient,

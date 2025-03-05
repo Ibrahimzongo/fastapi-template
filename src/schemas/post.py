@@ -2,6 +2,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
+
 # Tag schemas
 class TagBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
@@ -40,9 +41,10 @@ class PostInDBBase(PostBase):
     author_id: int
     created_at: datetime
     updated_at: datetime
-    tags: List[Tag] = []
+    tags: List["Tag"] = []
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class Post(PostInDBBase):
     pass
@@ -58,6 +60,8 @@ class AuthorInfo(BaseModel):
 
 class PostWithAuthor(Post):
     author: AuthorInfo
+    
+    model_config = ConfigDict(from_attributes=True)
 
 # Response schemas
 class PostPage(BaseModel):
@@ -68,3 +72,17 @@ class PostPage(BaseModel):
     pages: int
 
     model_config = ConfigDict(from_attributes=True)
+
+class PostResponse(PostBase):
+    id: int
+    author_id: int
+    created_at: datetime
+    updated_at: datetime
+    author: "AuthorInfo"
+    tags: List["Tag"] = []
+
+    model_config = ConfigDict(from_attributes=True)
+    
+PostInDBBase.model_rebuild()
+Post.model_rebuild()
+PostWithAuthor.model_rebuild()

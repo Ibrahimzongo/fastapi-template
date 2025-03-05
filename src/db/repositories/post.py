@@ -61,14 +61,13 @@ class PostRepository:
             published=obj_in.published,
             author_id=author_id
         )
-        
-        # Handle tags
+        self.db.add(db_post)
+        self.db.flush()  # Permet d'obtenir l'ID avant d'ajouter des relations
         if obj_in.tags:
             for tag_name in obj_in.tags:
                 tag = self.get_or_create_tag(tag_name)
-                db_post.tags.append(tag)
-
-        self.db.add(db_post)
+                if tag not in db_post.tags:
+                    db_post.tags.append(tag)
         self.db.commit()
         self.db.refresh(db_post)
         return db_post

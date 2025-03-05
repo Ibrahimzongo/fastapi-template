@@ -28,6 +28,7 @@ jobs:
       
       redis:
         image: redis:7-alpine
+        command: redis-server --requirepass redispassword
         ports:
           - 6379:6379
         options: >-
@@ -83,7 +84,7 @@ jobs:
           FIRST_SUPERUSER_PASSWORD: admin123
           REDIS_HOST: localhost
           REDIS_PORT: 6379
-          REDIS_PASSWORD: ""
+          REDIS_PASSWORD: "redispassword"
           REDIS_DB: 0
 
       - name: Upload test results
@@ -91,6 +92,7 @@ jobs:
         with:
           name: test-results
           path: junit/test-results.xml
+          retention-days: 14
         if: always()
 
       - name: Upload coverage report

@@ -62,7 +62,7 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           script: |
-            cd /path/to/deployment
+            cd /opt/fastapi-template/staging
             docker-compose pull
             docker-compose up -d --force-recreate api
             docker system prune -af
@@ -84,7 +84,7 @@ jobs:
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           script: |
-            cd /path/to/deployment
+            cd /opt/fastapi-template/production
             export TAG=${GITHUB_REF#refs/tags/}
             docker-compose pull
             docker-compose up -d --force-recreate api

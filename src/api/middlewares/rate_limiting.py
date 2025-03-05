@@ -3,8 +3,11 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
+import logging
 
 from core.rate_limiter import RateLimiter
+
+logger = logging.getLogger(__name__)
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(
@@ -27,22 +30,27 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if hasattr(request.state, "user"):
             user_id = request.state.user.id
 
-        # Check rate limit
-        is_limited, headers = self.rate_limiter.is_rate_limited(request, user_id)
+        try:
+            # Check rate limit
+            is_limited, headers = self.rate_limiter.is_rate_limited(request, user_id)
 
-        if is_limited:
-            return JSONResponse(
-                status_code=HTTP_429_TOO_MANY_REQUESTS,
-                content={
-                    "detail": "Too many requests",
-                    "type": "rate_limit_exceeded"
-                },
-                headers=headers
-            )
+            if is_limited:
+                return JSONResponse(
+                    status_code=HTTP_429_TOO_MANY_REQUESTS,
+                    content={
+                        "detail": "Too many requests",
+                        "type": "rate_limit_exceeded"
+                    },
+                    headers=headers
+                )
 
-        # Add rate limit headers to response
-        response = await call_next(request)
-        for key, value in headers.items():
-            response.headers[key] = value
+            # Add rate limit headers to response
+            response = await call_next(request)
+            for key, value in headers.items():
+                response.headers[key] = value
 
-        return response
+            return response
+        except Exception as e:
+            # En cas d'erreur avec Redis, on log et on continue sans rate limiting
+            logger.warning(f"Rate limiting failed: {str(e)}")
+            return await call_next(request)

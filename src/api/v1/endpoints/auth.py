@@ -3,6 +3,9 @@ from typing import Any
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+import jwt
+from pydantic import ValidationError
+
 
 from core.config import settings
 from core.security import create_access_token, create_refresh_token, verify_password, decode_token

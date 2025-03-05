@@ -1,38 +1,13 @@
-import json
 import logging
 from functools import wraps
-from typing import Any, Callable, Dict, Optional, Type, Union
+from typing import Any, Callable, Optional, List
 
 from fastapi import Request, Response
-from redis import Redis
-from pydantic import BaseModel
 
-from core.config import settings
+# Importer depuis le module de base
+from core.cache_base import redis_client, is_redis_available, serialize_response, deserialize_response
 
 logger = logging.getLogger(__name__)
-
-redis_client = Redis.from_url(
-    settings.REDIS_URL,
-    socket_connect_timeout=1,
-    socket_timeout=1,
-    retry_on_timeout=True
-)
-
-def is_redis_available() -> bool:
-    """Check if Redis is available."""
-    try:
-        return redis_client.ping()
-    except Exception as e:
-        logger.warning(f"Redis is not available: {str(e)}")
-        return False
-
-def serialize_response(response_data: Any) -> str:
-    """Serialize response data to JSON string."""
-    return json.dumps(response_data)
-
-def deserialize_response(response_data: str) -> Any:
-    """Deserialize JSON string to response data."""
-    return json.loads(response_data)
 
 class ResponseCache:
     """Cache for API responses using Redis."""
@@ -57,7 +32,7 @@ class ResponseCache:
         *,
         expire: int = 60,  # Cache expiration in seconds
         prefix: str = "api_cache",
-        exclude_from_cache: Optional[list[str]] = None
+        exclude_from_cache: Optional[List[str]] = None
     ) -> Callable:
         """
         Decorator to cache API responses in Redis.
@@ -81,31 +56,39 @@ class ResponseCache:
                 if not is_redis_available():
                     return await func(request, *args, **kwargs)
                 
-                # Generate cache key
-                cache_key = cls.generate_cache_key(request, prefix)
-                
-                # Try to get cached response
-                cached_response = redis_client.get(cache_key)
-                if cached_response:
-                    logger.debug(f"Cache hit for key: {cache_key}")
-                    return deserialize_response(cached_response)
-                
-                # Get fresh response
-                response = await func(request, *args, **kwargs)
-                
-                # Cache the response
                 try:
+                    # Generate cache key
+                    cache_key = cls.generate_cache_key(request, prefix)
+                    
+                    # Try to get cached response
+                    cached_response = redis_client.get(cache_key)
+                    if cached_response:
+                        logger.debug(f"Cache hit for key: {cache_key}")
+                        deserialized = deserialize_response(cached_response)
+                        if deserialized:
+                            return deserialized
+                    
+                    # Get fresh response
+                    response = await func(request, *args, **kwargs)
+                    
+                    # Cache the response
                     serialized_response = serialize_response(response)
-                    redis_client.setex(
-                        cache_key,
-                        expire,
-                        serialized_response
-                    )
-                    logger.debug(f"Cached response for key: {cache_key}")
+                    if serialized_response:
+                        try:
+                            redis_client.setex(
+                                cache_key,
+                                expire,
+                                serialized_response
+                            )
+                            logger.debug(f"Cached response for key: {cache_key}")
+                        except Exception as e:
+                            logger.error(f"Failed to cache response: {str(e)}")
+                    
+                    return response
                 except Exception as e:
-                    logger.error(f"Failed to cache response: {str(e)}")
-                
-                return response
+                    # En cas d'erreur, log et retourne la réponse non mise en cache
+                    logger.error(f"Cache error: {str(e)}")
+                    return await func(request, *args, **kwargs)
                 
             return wrapper
         return decorator

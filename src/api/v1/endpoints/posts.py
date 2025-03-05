@@ -139,19 +139,13 @@ async def create_post(
             logger.warning(f"Redis cache invalidation error: {e}")
     
     return post
-
 @router.get("/{post_id}", response_model=PostWithAuthor)
 async def get_post(
     *,
     db: Session = Depends(get_db),
     post_id: int,
     current_user: User = Depends(get_current_user),
-    request: Request = None,
 ) -> Any:
-    """
-    Get post by ID.
-    """
-    # Check if cached response exists
     cache_key = f"posts:detail:{post_id}"
     if redis_client:
         try:
@@ -161,7 +155,6 @@ async def get_post(
         except Exception as e:
             logger.warning(f"Redis cache error: {e}")
     
-    # Get post from database
     post_repo = PostRepository(db)
     post = post_repo.get(post_id)
     if not post:
@@ -169,26 +162,46 @@ async def get_post(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found"
         )
+    _ = post.author  # Forcer le chargement de l'auteur
+
+    # Sérialiser l'objet ORM pour correspondre au schéma PostWithAuthor
+    post_data = jsonable_encoder(post)
     
-    # Update view count
-    if hasattr(post, 'views_count'):
-        post.views_count += 1
-        db.commit()
-    
-    # Cache the response
     if redis_client:
         try:
-            # Cache for 10 minutes
             redis_client.setex(
                 cache_key,
-                60 * 10,
-                json.dumps(jsonable_encoder(post))
+                60 * 5,  # 5 minutes
+                json.dumps(post_data)
             )
         except Exception as e:
             logger.warning(f"Redis cache error: {e}")
+    return post_data
     
-    return post
+    post_repo = PostRepository(db)
+    post = post_repo.get(post_id)
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found"
+        )
+    # Forcer le chargement de la relation auteur
+    _ = post.author  
 
+    # Convertir l'objet ORM en dictionnaire sérialisable
+    post_data = jsonable_encoder(post)
+    
+    # Mise en cache de la réponse
+    if redis_client:
+        try:
+            redis_client.setex(
+                cache_key,
+                60 * 5,  # 5 minutes
+                json.dumps(post_data)
+            )
+        except Exception as e:
+            logger.warning(f"Redis cache error: {e}")
+    return post_data
 @router.put("/{post_id}", response_model=Post)
 async def update_post(
     *,
