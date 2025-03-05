@@ -4,71 +4,72 @@
 ![Security Analysis](https://github.com/yourusername/fastapi-template/workflows/Security%20Analysis/badge.svg)
 ![Deploy](https://github.com/yourusername/fastapi-template/workflows/Deploy/badge.svg)
 
-A modern, production-ready template for FastAPI projects with authentication, CRUD, caching, rate limiting, and more.
+Un template moderne, prêt pour la production, pour les projets FastAPI avec authentification, CRUD, mise en cache, limitation de débit, et bien plus.
 
-## Features
+## ✨ Fonctionnalités
 
-- **FastAPI Framework**: High performance, easy to learn, fast to code
-- **JWT Authentication**: Secure authentication with refresh tokens
-- **RBAC**: Role-based access control
-- **PostgreSQL & MySQL**: Support for multiple databases
-- **SQLAlchemy ORM**: Database ORM with latest SQLAlchemy 2.0 syntax
-- **Alembic Migrations**: Database versioning and migrations
-- **Pydantic Validation**: Schema validation with Pydantic v2
-- **OpenAPI Documentation**: Auto-generated API documentation
-- **Redis Caching**: High-performance caching
-- **Rate Limiting**: Protection against abuse
-- **Docker**: Containerization for development and production
-- **CI/CD**: GitHub Actions workflows for testing and deployment
-- **Logging**: Structured JSON logging
-- **Testing**: Pytest configuration with coverage reports
-- **Code Quality**: Black, Flake8, mypy, isort configuration
-- **Security**: Security scanning and best practices
+- **🚀 FastAPI Framework**: Haute performance, facile à apprendre, rapide à coder
+- **🔒 JWT Authentication**: Authentification sécurisée avec tokens de rafraîchissement
+- **👮 RBAC**: Contrôle d'accès basé sur les rôles
+- **🐘 PostgreSQL & MySQL**: Support pour plusieurs bases de données
+- **🧩 SQLAlchemy ORM**: ORM de base de données avec la dernière syntaxe SQLAlchemy 2.0
+- **📈 Alembic Migrations**: Versionnement et migrations de base de données
+- **✅ Pydantic Validation**: Validation de schéma avec Pydantic v2
+- **📚 OpenAPI Documentation**: Documentation API auto-générée
+- **⚡ Redis Caching**: Mise en cache haute performance
+- **🛡️ Rate Limiting**: Protection contre les abus
+- **🐳 Docker**: Conteneurisation pour le développement et la production
+- **🔄 CI/CD**: Workflows GitHub Actions pour les tests et le déploiement
+- **📝 Logging**: Logging JSON structuré
+- **🧪 Testing**: Configuration pytest avec rapports de couverture
+- **💎 Code Quality**: Configuration Black, Flake8, mypy, isort
+- **🔐 Security**: Analyse de sécurité et bonnes pratiques
 
-## Getting Started
+## 🚀 Démarrage Rapide
 
-### Prerequisites
+### Prérequis
 
-- Docker and Docker Compose
-- Python 3.11 or higher (for local development)
+- Docker et Docker Compose
+- Python 3.11 ou supérieur (pour le développement local)
 - Git
 
 ### Installation
 
-1. Clone the repository:
+1. **Cloner le dépôt et initialiser le projet**:
 ```bash
-git clone https://github.com/Ibrahimzongo/fastapi-template.git
-cd fastapi-template
+git clone https://github.com/Ibrahimzongo/fastapi-template.git mon-projet
+cd mon-projet
+python init_project.py  # Script d'initialisation automatique
 ```
 
-2. Create a `.env` file:
+2. **Créer un fichier `.env`**:
 ```bash
 cp .env.example .env
-# Edit .env with your configuration
+# Éditer .env avec votre configuration
 ```
 
-3. Start the development environment:
+3. **Démarrer l'environnement de développement**:
 ```bash
 docker-compose up --build
 ```
 
-4. Access the API at http://localhost:8000
+4. **Accéder à l'API à** http://localhost:8000
 
-5. Access the API documentation at http://localhost:8000/docs
+5. **Accéder à la documentation de l'API à** http://localhost:8000/docs
 
-### Local Development
+### Développement Local (sans Docker)
 
-For local development without Docker:
+Pour le développement local sans Docker:
 
 ```bash
-# Create a virtual environment
+# Créer un environnement virtuel
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Sur Windows: venv\Scripts\activate
 
-# Install dependencies
+# Installer les dépendances
 pip install -r requirements/dev.txt
 
-# Set environment variables
+# Définir les variables d'environnement
 export DATABASE_TYPE=postgresql
 export DATABASE_HOST=localhost
 export DATABASE_PORT=5432
@@ -77,36 +78,84 @@ export DATABASE_PASSWORD=password123
 export DATABASE_NAME=fastapi_db
 export SECRET_KEY=your-secret-key
 
-# Run the application
+# Exécuter l'application
 uvicorn src.main:app --reload
 ```
 
-## Database Migrations
+## 📦 Structure du Projet
 
-To manage database migrations:
+```
+fastapi-template/
+├── .github/                   # Workflows GitHub Actions
+├── alembic/                   # Migrations de base de données
+├── docker/                    # Configurations Docker
+│   ├── dev/                   # Config Docker de développement
+│   └── prod/                  # Config Docker de production
+├── src/                       # Code source de l'application
+│   ├── api/                   # Routes et endpoints API
+│   ├── core/                  # Configurations de base
+│   ├── db/                    # Modèles et repositories de base de données
+│   ├── models/                # Modèles SQLAlchemy
+│   └── schemas/               # Schémas Pydantic
+├── tests/                     # Suite de tests
+├── scripts/                   # Scripts utilitaires
+└── docs/                      # Documentation
+```
+
+## 🔄 Migrations de Base de Données
+
+Pour gérer les migrations de base de données:
 
 ```bash
-# Initialize the database
+# Initialiser la base de données
 python scripts/migrate.py init
 
-# Create a new migration
+# Créer une nouvelle migration
 python scripts/migrate.py create --message "description"
 
-# Apply migrations
+# Appliquer les migrations
 python scripts/migrate.py migrate
 
-# Revert migrations
+# Annuler les migrations
 python scripts/migrate.py rollback
 ```
 
-See [migrations documentation](docs/migrations.md) for more information.
+## 🛠️ Utilisation avec Make
 
-## Authentication
-
-The API uses JWT tokens for authentication with refresh token mechanism.
+Le projet inclut un Makefile pour faciliter les tâches courantes:
 
 ```bash
-# Register a new user
+# Afficher l'aide
+make help
+
+# Construire les conteneurs
+make build
+
+# Démarrer les conteneurs
+make up
+
+# Arrêter les conteneurs
+make down
+
+# Afficher les logs
+make logs
+
+# Exécuter les tests
+make test
+
+# Formater le code
+make fmt
+
+# Linter le code
+make lint
+```
+
+## 🔒 Authentification
+
+L'API utilise des tokens JWT pour l'authentification avec un mécanisme de token de rafraîchissement.
+
+```bash
+# Enregistrer un nouvel utilisateur
 curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
@@ -116,69 +165,72 @@ curl -X POST http://localhost:8000/api/v1/auth/register \
     "full_name": "User Name"
   }'
 
-# Login
+# Connexion
 curl -X POST http://localhost:8000/api/v1/auth/login \
   -d "username=username&password=password123"
 
-# Access protected endpoint
+# Accéder à un endpoint protégé
 curl -X GET http://localhost:8000/api/v1/posts/ \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 
-# Refresh token
+# Rafraîchir le token
 curl -X POST http://localhost:8000/api/v1/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refresh_token": "YOUR_REFRESH_TOKEN"}'
 ```
 
-## Caching
+## 🚢 Déploiement
 
-The API uses Redis for caching:
+### Préparation du Déploiement
 
-- Automatic caching for GET endpoints (posts, tags)
-- Cache invalidation on POST, PUT, DELETE requests
-- Configurable cache expiration
+1. **Configuration des Secrets GitHub**:
+   
+   Configurez les secrets suivants dans votre dépôt GitHub:
+   
+   - `DOCKERHUB_USERNAME`: Votre nom d'utilisateur Docker Hub
+   - `DOCKERHUB_TOKEN`: Votre token Docker Hub
+   - `STAGING_HOST`: Hôte de staging
+   - `STAGING_USER`: Utilisateur SSH de staging
+   - `STAGING_SSH_KEY`: Clé SSH de staging
+   - `PRODUCTION_HOST`: Hôte de production
+   - `PRODUCTION_USER`: Utilisateur SSH de production
+   - `PRODUCTION_SSH_KEY`: Clé SSH de production
 
-See [caching documentation](docs/caching.md) for more information.
+2. **Déploiement en Production**:
+   
+   Pour déployer en production, créez un tag et poussez-le:
+   
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
 
-## CI/CD
+## 🔧 Environnements
 
-This template includes GitHub Actions workflows for:
+Le template supporte trois environnements:
 
-- Running tests and code quality checks
-- Security scanning
-- Building and pushing Docker images
-- Automated deployment to staging and production
+- **Development**: Pour le développement local
+- **Staging**: Pour les tests avant production
+- **Production**: Pour l'environnement de production
 
-See [CI/CD documentation](docs/ci-cd.md) for more information.
+## 📚 Documentation
 
-## Project Structure
+La documentation complète est disponible dans le dossier [docs/](docs/):
 
-```
-fastapi-template/
-├── .github/                   # GitHub Actions workflows
-├── alembic/                   # Database migrations
-├── docker/                    # Docker configurations
-│   ├── dev/                   # Development Docker config
-│   └── prod/                  # Production Docker config
-├── src/                       # Application source code
-│   ├── api/                   # API routes and endpoints
-│   ├── core/                  # Core configurations
-│   ├── db/                    # Database models and repositories
-│   ├── models/                # SQLAlchemy models
-│   └── schemas/               # Pydantic schemas
-├── tests/                     # Test suite
-├── scripts/                   # Utility scripts
-└── docs/                      # Documentation
-```
+- [Documentation de l'API](docs/api.md)
+- [Documentation d'authentification](docs/auth.md)
+- [Documentation de mise en cache](docs/caching.md)
+- [Documentation CI/CD](docs/ci-cd.md)
+- [Documentation de déploiement](docs/deployment.md)
 
-## Contributing
+## 🤝 Contribution
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -am 'Add my feature'`
-4. Push to the branch: `git push origin feature/my-feature`
-5. Submit a pull request
+1. Forker le dépôt
+2. Créer une branche de fonctionnalité: `git checkout -b feature/ma-fonctionnalité`
+3. Commiter vos changements: `git commit -am 'Ajouter ma fonctionnalité'`
+4. Pousser vers la branche: `git push origin feature/ma-fonctionnalité`
+5. Soumettre une pull request
 
-## License
+## 📄 Licence
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de détails.

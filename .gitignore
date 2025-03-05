@@ -1,0 +1,71 @@
+# Environnements et configurations
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+env/
+ENV/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Tests et couverture
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.pytest_cache/
+coverage.xml
+junit/
+
+# Documentation
+docs/_build/
+site/
+
+# Logs
+logs/
+*.log
+
+# Bases de données
+*.sqlite3
+*.db
+
+# Docker
+.docker/
+!.docker/dev/
+!.docker/prod/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+.ipynb_checkpoints
+
+# Secrets
+*.pem
+*.key
+*.pub
